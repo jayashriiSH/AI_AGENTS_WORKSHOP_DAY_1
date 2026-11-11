@@ -52,21 +52,21 @@ export default function AgentChat({ onDataChanged }: { onDataChanged?: () => voi
   }
 
   return (
-    <div className="flex h-[70vh] flex-col rounded-xl border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 px-4 py-3">
-        <h2 className="font-semibold">Agent</h2>
-        <p className="text-xs text-slate-500">Ask in plain English. You can see every tool the agent uses.</p>
+    <div className="agent-card">
+      <div className="card-header">
+        <h2 className="card-title">Agent</h2>
+        <p className="card-description">Ask in plain English. You can see every tool the agent uses.</p>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="agent-conversation">
         {messages.length === 0 && (
-          <div className="space-y-2">
-            <p className="text-sm text-slate-500">Try one of these:</p>
+          <div className="chat-suggestions">
+            <p className="chat-suggestions-intro">Try one of these:</p>
             {SAMPLE_PROMPTS.map((p) => (
               <button
                 key={p}
                 onClick={() => send(p)}
-                className="block w-full rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:bg-slate-50"
+                className="chat-suggestion"
               >
                 {p}
               </button>
@@ -75,17 +75,20 @@ export default function AgentChat({ onDataChanged }: { onDataChanged?: () => voi
         )}
 
         {messages.map((m, i) => (
-          <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
+          <div
+            key={i}
+            className={`chat-message ${m.role === "user" ? "chat-message-user" : "chat-message-model"}`}
+          >
             <div
               className={
                 m.role === "user"
-                  ? "max-w-[85%] rounded-2xl bg-slate-900 px-3 py-2 text-sm text-white"
-                  : "max-w-[85%] space-y-2"
+                  ? "chat-bubble-user"
+                  : "chat-model-content"
               }
             >
               {m.steps && m.steps.length > 0 && <ToolSteps steps={m.steps} />}
               {m.role === "model" ? (
-                <div className="whitespace-pre-wrap rounded-2xl bg-slate-100 px-3 py-2 text-sm">
+                <div className="chat-model-text">
                   <FormattedText text={m.text} />
                 </div>
               ) : (
@@ -95,8 +98,8 @@ export default function AgentChat({ onDataChanged }: { onDataChanged?: () => voi
           </div>
         ))}
 
-        {loading && <p className="text-sm text-slate-500">Agent is working...</p>}
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {loading && <p className="chat-loading">Agent is working...</p>}
+        {error && <p className="chat-error">{error}</p>}
         <div ref={bottomRef} />
       </div>
 
@@ -105,18 +108,18 @@ export default function AgentChat({ onDataChanged }: { onDataChanged?: () => voi
           e.preventDefault();
           send(input);
         }}
-        className="flex gap-2 border-t border-slate-200 p-3"
+        className="chat-form"
       >
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your request..."
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+          className="chat-input"
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-50"
+          className="chat-send"
         >
           Send
         </button>
@@ -144,16 +147,16 @@ function FormattedText({ text }: { text: string }) {
 /** Shows each tool call so users (and judges) can see what the agent did. */
 function ToolSteps({ steps }: { steps: AgentStep[] }) {
   return (
-    <div className="space-y-1">
+    <div className="tool-steps">
       {steps.map((s, i) => (
-        <details key={i} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs">
-          <summary className="cursor-pointer select-none">
-            <span className={s.ok ? "text-emerald-700" : "text-red-600"}>{s.ok ? "Done" : "Failed"}</span>
+        <details key={i} className="tool-step">
+          <summary className="tool-step-summary">
+            <span className={s.ok ? "tool-step-success" : "tool-step-failure"}>{s.ok ? "Done" : "Failed"}</span>
             {" · "}
-            <span className="font-mono font-medium">{s.tool}</span>
-            {s.writes && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-amber-800">writes data</span>}
+            <span className="tool-step-name">{s.tool}</span>
+            {s.writes && <span className="tool-step-write">writes data</span>}
           </summary>
-          <pre className="mt-1 overflow-x-auto whitespace-pre-wrap text-slate-600">
+          <pre className="tool-step-output">
             {JSON.stringify({ args: s.args, ...(s.ok ? { result: s.result } : { error: s.error }) }, null, 2)}
           </pre>
         </details>
